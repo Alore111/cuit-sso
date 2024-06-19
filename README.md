@@ -21,6 +21,7 @@
 - [x] 支持使用Cookie管理会话。
 - [ ] 支持WebVPN登录。
 - [ ] 支持使用代理IP。
+- [ ] 支持使用第三方登录。
 
 ### 环境要求
 
@@ -174,3 +175,7 @@ act_elect_course = http://jwgl.cuit.edu.cn/eams/stdElectCourse.action
 ### 联系方式
 
 如有任何问题或需要帮助，请在GitHub上提出Issue或联系 [alore@2ndtool.top]。
+
+### 声明
+
+本脚本仅用于学习交流，不得用于任何商业用途。使用本脚本造成的任何后果，与本作者无关。
