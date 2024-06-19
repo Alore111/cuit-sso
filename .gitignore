@@ -2,6 +2,20 @@ __pycache__/
 /captcha.jpg
 .cache
 config.ini
+security.js
+test.html
+
+# Python virtual environment
+pyvenv.cfg
+share/
+Scripts/
+Lib/
+include/
+
+
+*.egg-info/
+*.egg
+*.log
 *.pyc
 *.pyo
 *.pyd
@@ -20,7 +34,3 @@ htmlcov
 coverage.xml
 .cache
 nosetests.xml
-coverage.xml
-*.cover
-htmlcov
-.tox
