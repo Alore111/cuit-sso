@@ -18,7 +18,6 @@ class CUITSSO:
         self.config.read('config.ini', encoding='utf-8')
 
         # 从配置文件中获取信息
-        self.ACCOUNT = self.config['ACCOUNT']
         self.CJY = self.config['CHAOJIYING']
         self.CAPTCHA = self.config['CAPTCHA']
         self.URLS = self.config['URLS']
@@ -234,6 +233,72 @@ class CUITSSO:
             logger.error(f"获取gsession失败: {e}")
             self.gsession = None
 
+    @logger.catch
+    def get_page(self, page_name):
+        initial_url = f"{self.URLS['origin_eams_page']}{page_name};jsessionid={self.jsession.upper()}"
+        headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "zh-CN,zh;q=0.9",
+            "Cache-Control": "no-cache",
+            "Cookie": f"JSESSIONID={self.jsession.upper()}; GSESSIONID={self.gsession.upper()}",
+            "Host": "jwgl.cuit.edu.cn",
+            "Pragma": "no-cache",
+            "Proxy-Connection": "keep-alive",
+            "Referer": "http://jwgl.cuit.edu.cn/",
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+        }
+
+        try:
+            # 初始请求
+            response = requests.get(initial_url, headers=headers, allow_redirects=False)
+            if response.status_code == 302:
+                sso_url = response.headers['Location']
+                logger.info(f"重定向到SSO: {sso_url}")
+
+                # SSO请求
+                sso_headers = headers.copy()
+                sso_headers["Host"] = "sso.cuit.edu.cn"
+                sso_headers["Cookie"] = f"SESSION={self.cookie.get('session')}; TGC={self.tgc}; route={self.cookie.get('route')}"
+                sso_response = requests.get(sso_url, headers=sso_headers, allow_redirects=False)
+                if sso_response.status_code == 302:
+                    final_2_url = sso_response.headers['Location']
+                    logger.info(f"重定向回带有票据的URL: {final_2_url}")
+
+                    # 带票据的最终请求
+                    final_2_response = requests.get(final_2_url, headers=headers, allow_redirects=False)
+                    logger.info(f"带有票据页面请求headers: {final_2_response.request.headers}")
+                    logger.info(f"带有票据页面返回headers:{final_2_response.headers}")
+                    if final_2_response.status_code == 302:
+                        final_1_url = final_2_response.headers['Location']
+                        logger.info(f"带有票据的URL的重定向URL: {final_1_url}")
+
+                        final_1_headers = headers.copy()
+                        final_1_headers["Cookie"] = f"JSESSIONID={self.jsession.upper()}; GSESSIONID={self.gsession.upper()}"
+                        final_1_response = requests.get(final_1_url, headers=final_1_headers, allow_redirects=False)
+                        logger.info(f"最终页面请求headers: {final_1_response.request.headers}")
+                        logger.info(f"最终页面返回headers:{final_1_response.headers}")
+                        if final_1_response.status_code == 200:
+                            logger.info(f"成功获取页面: {page_name}")
+                            return final_1_response.text
+                        else:
+                            logger.error(f"获取页面失败: {final_1_response.status_code}")
+                            return None
+                    else:
+                        logger.error(f"带票据的请求响应状态: {final_2_response.status_code}")
+                        return None
+                else:
+                    logger.error(f"SSO响应状态: {sso_response.status_code}")
+                    return None
+            else:
+                response.raise_for_status()
+                return response.text
+        except requests.RequestException as e:
+            logger.error(f"获取页面失败: {e}")
+            return None
+
+
     def login(self):
         # 登录过程，包含获取Cookie、验证码、登录校验和票据
         self.get_cookie()
@@ -246,15 +311,18 @@ class CUITSSO:
                         f.write(cap.content)
                     img = cap.content
                     if self.crack_type == 1:
+                        logger.info("正在使用超级鹰识别验证码...")
                         captcha_str = self.chaojiying.PostPic(img, 1004)["pic_str"]
                         logger.info(f"验证码识别结果：{captcha_str}")
                     elif self.crack_type == 2:
+                        logger.info("正在使用OCR识别验证码...")
                         # 初始化 ddddocr 对象，抑制输出消息
                         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                             ocr = ddddocr.DdddOcr()
                             captcha_str = ocr.classification(img)
                             logger.info(f"验证码识别结果：{captcha_str}")
                     else:
+                        logger.info("正在使用手动识别验证码...")
                         captcha_str = input("请输入验证码(图片位于captcha.jpg)：")
                     
                     is_login = self.login_check(captcha_str)
@@ -280,20 +348,22 @@ class CUITSSO:
 
 
 if __name__ == "__main__":
-    # 读取配置文件
-    config = configparser.ConfigParser()
-    config.read('config.ini', encoding='utf-8')
-
-    # 从配置文件中获取信息
-    ACCOUNT = config['ACCOUNT']
+    # 初始化用户账号
+    ACCOUNT = {
+        'username': "",    # 学号
+        'password': "",    # 密码
+    }
 
     # 初始化 CUITSSO 对象
     cuit_login = CUITSSO(ACCOUNT['username'], ACCOUNT['password'])
     cuit_login.login()
     
-    # 输出登录信息
+    # # 输出登录信息
     logger.info(f"gsession: {cuit_login.gsession}")
     logger.info(f"jsession: {cuit_login.jsession}")
     logger.info(f"ticket: {cuit_login.ticket}")
     logger.info(f"tgc: {cuit_login.tgc}")
     logger.info(f"cookie: {cuit_login.cookie}")
+
+    # stdDetail = cuit_login.get_page("stdDetail.action")
+    # logger.info(stdDetail)

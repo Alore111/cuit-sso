@@ -19,6 +19,7 @@
 - [x] 支持使用超级鹰识别验证码。
 - [x] 支持使用ddddocr识别验证码。
 - [x] 支持使用Cookie管理会话。
+- [ ] 支持获取教务处任意页面（get_page待修复）。
 - [ ] 支持WebVPN登录。
 - [ ] 支持使用代理IP。
 - [ ] 支持使用第三方登录。
@@ -52,11 +53,6 @@
    编辑 `config.ini` 文件以设置账户信息和服务URL。文件格式如下：
 
    ```ini
-    # 校园统一身份认证账号密码
-    [ACCOUNT]
-    username = your_username
-    password = your_password
-
     # 验证码识别方式
     # 1: 超级鹰在线识别（需注册超级鹰账号并获取题分）
     # 2: 开源学习库本地识别（ddddocr第三方库）
@@ -64,7 +60,7 @@
     [CAPTCHA]
     crack_type = 2
 
-    # 超级鹰账号密码
+    # 超级鹰账号密码（若未选择此方式可不填）
     # 需注册超级鹰账号并获取题分
     # https://www.chaojiying.com/
     [CHAOJIYING]
@@ -90,7 +86,7 @@
 
 2. **运行脚本：**
    ```sh
-   python main.py
+   python suitsso.py
    ```
 
 3. **手动输入验证码（如果配置）：**
@@ -99,7 +95,7 @@
 ### 代码概览
 
 - **CUITSSO 类：** 包含处理登录过程的所有方法，包括获取Cookie、处理验证码和提交登录表单。
-- **main.py：** 初始化登录过程并配置日志。
+- **suitsso.py：** 初始化登录过程并配置日志。
 
 ### 方法概述
 
@@ -129,11 +125,6 @@
 ### 配置示例 (`config.ini`)
 
 ```ini
-# 校园统一身份认证账号密码
-[ACCOUNT]
-username = your_username
-password = your_password
-
 # 验证码识别方式
 # 1: 超级鹰在线识别（需注册超级鹰账号并获取题分）
 # 2: 开源学习库本地识别（ddddocr第三方库）
@@ -141,7 +132,7 @@ password = your_password
 [CAPTCHA]
 crack_type = 2
 
-# 超级鹰账号密码
+# 超级鹰账号密码（若未选择此方式可不填）
 # 需注册超级鹰账号并获取题分
 # https://www.chaojiying.com/
 [CHAOJIYING]
