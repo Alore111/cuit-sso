@@ -23,6 +23,7 @@ class CUITSSO:
         self.CAPTCHA = self.config['CAPTCHA']
         self.URLS = self.config['URLS']
 
+        # 初始化用户信息
         self.username = username
         self.password = password
         self.crack_type = int(self.CAPTCHA['crack_type'])
@@ -32,10 +33,12 @@ class CUITSSO:
         self.jsession = None
         self.gsession = None
 
+        # 如果验证码破解类型为1，初始化超级鹰客户端
         if self.crack_type == 1:
             self.chaojiying = cjy.Chaojiying_Client(self.CJY['username'], self.CJY['password'], self.CJY['soft_id'])
 
     def get_cookie(self):
+        # 获取初始Cookie
         url = self.URLS['login_url']
         params = {"service": self.URLS['service_url']}
         headers = {
@@ -64,6 +67,7 @@ class CUITSSO:
             self.cookie = None
 
     def get_data_list(self):
+        # 获取数据列表
         url = self.URLS['data_list_url']
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0",
@@ -82,6 +86,7 @@ class CUITSSO:
             return None
 
     def get_captcha(self, timestamp):
+        # 获取验证码图片
         url = self.URLS['captcha_url']
         params = {"timestamp": timestamp}
         headers = {
@@ -107,6 +112,7 @@ class CUITSSO:
             return None
 
     def login_check(self, captcha):
+        # 验证登录信息
         url = self.URLS['login_check_url']
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0",
@@ -136,6 +142,7 @@ class CUITSSO:
             return False
 
     def get_ticket(self, execution, captcha):
+        # 获取票据（ticket）
         url = f"{self.URLS['login_url']}?service={self.URLS['service_url']}"
         headers = {
             'Host': 'sso.cuit.edu.cn',
@@ -183,6 +190,7 @@ class CUITSSO:
             self.tgc = None
 
     def get_jsession(self):
+        # 获取JSESSIONID
         url = f"{self.URLS['act_elect_course']}"
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0",
@@ -206,6 +214,7 @@ class CUITSSO:
             self.jsession = None
 
     def get_gsession(self):
+        # 获取GSESSIONID
         url = f"{self.URLS['act_elect_course']}"
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0",
@@ -226,6 +235,7 @@ class CUITSSO:
             self.gsession = None
 
     def login(self):
+        # 登录过程，包含获取Cookie、验证码、登录校验和票据
         self.get_cookie()
         if self.cookie:
             for attempt in range(3):
@@ -277,9 +287,11 @@ if __name__ == "__main__":
     # 从配置文件中获取信息
     ACCOUNT = config['ACCOUNT']
 
+    # 初始化 CUITSSO 对象
     cuit_login = CUITSSO(ACCOUNT['username'], ACCOUNT['password'])
     cuit_login.login()
     
+    # 输出登录信息
     logger.info(f"gsession: {cuit_login.gsession}")
     logger.info(f"jsession: {cuit_login.jsession}")
     logger.info(f"ticket: {cuit_login.ticket}")
